@@ -14,7 +14,7 @@ import (
 
 func ResourcePipelineFilters() *schema.Resource {
 	resource := &schema.Resource{
-		Description: "Resource for creating a Harness Pipeline Filters.",
+		Description: "Resource for creating Harness Pipeline Filters.",
 
 		ReadContext:   resourcePipelineFiltersRead,
 		UpdateContext: resourcePipelineFiltersCreateOrUpdate,
@@ -74,7 +74,7 @@ func ResourcePipelineFilters() *schema.Resource {
 				},
 			},
 			"filter_visibility": {
-				Description:  "This indicates visibility of filters, by default it is Everyone.",
+				Description:  "This indicates visibility of filters. By default, everyone can view this filter.",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"EveryOne", "OnlyCreator"}, false),

@@ -1,4 +1,4 @@
-package filters
+package template_filters
 
 import (
 	"context"
@@ -12,55 +12,55 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func ResourceFilters() *schema.Resource {
+func ResourceTemplateFilters() *schema.Resource {
 	resource := &schema.Resource{
-		Description: "Resource for creating a Harness Filter. This resource support filters of types {Connector, DelegateProfile, Delegate, EnvironmentGroup, FileStore, Environment}",
+		Description: "Resource for creating a Harness Template Filters.",
 
-		ReadContext:   resourceFiltersRead,
-		UpdateContext: resourceFiltersCreateOrUpdate,
-		DeleteContext: resourceFilterDelete,
-		CreateContext: resourceFiltersCreateOrUpdate,
+		ReadContext:   resourceTemplateFiltersRead,
+		UpdateContext: resourceTemplateFiltersCreateOrUpdate,
+		DeleteContext: resourceTemplateFiltersDelete,
+		CreateContext: resourceTemplateFiltersCreateOrUpdate,
 		Importer:      helpers.MultiLevelFilterImporter,
 
 		Schema: map[string]*schema.Schema{
 			"identifier": {
-				Description: "Unique identifier of the resource",
+				Description: "Unique identifier of the resource.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"name": {
-				Description: "Name of the Filter",
+				Description: "Name of the template filters.",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"type": {
-				Description:  "Type of filter. Currently supported types are {Connector, DelegateProfile, Delegate, EnvironmentGroup, FileStore, Environment}",
+				Description:  "Type of template filters. Currently supported types are { Template}",
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"Connector", "DelegateProfile", "Delegate", "EnvironmentGroup", "FileStore", "Environment"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"Template"}, false),
 			},
 			"org_id": {
-				Description: "organization Identifier for the Entity",
+				Description: "Organization Identifier for the Entity.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"project_id": {
-				Description: "project Identifier for the Entity",
+				Description: "Project Identifier for the Entity.",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"filter_properties": {
-				Description: "Properties of the filter entity defined in Harness.",
+				Description: "Properties of the filters entity defined in Harness.",
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Required:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"filter_type": {
-							Description:  "Corresponding Entity of the filter. Currently supported types are {Connector, DelegateProfile, Delegate, EnvironmentGroup, FileStore, Environment}.",
+							Description:  "Corresponding Entity of the filters. Currently supported types are {TemplateSetup, TemplateExecution, Template}.",
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"Connector", "DelegateProfile", "Delegate", "EnvironmentGroup", "FileStore", "Environment"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"TemplateSetup", "TemplateExecution", "Template"}, false),
 						},
 						"tags": {
 							Description: "Tags to associate with the resource. Tags should be in the form `name:value`.",
@@ -74,7 +74,7 @@ func ResourceFilters() *schema.Resource {
 				},
 			},
 			"filter_visibility": {
-				Description:  "This indicates visibility of filter. By default, everyone can view this filter.",
+				Description:  "This indicates visibility of filters. By default, everyone can view this filter.",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"EveryOne", "OnlyCreator"}, false),
@@ -85,13 +85,13 @@ func ResourceFilters() *schema.Resource {
 	return resource
 }
 
-func resourceFiltersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTemplateFiltersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c, ctx := meta.(*internal.Session).GetPlatformClientWithContext(ctx)
 
 	id := d.Id()
 
 	type_ := d.Get("type").(string)
-	resp, httpResp, err := c.FilterApi.GetFilter(ctx, c.AccountId, id, type_, &nextgen.FilterApiGetFilterOpts{
+	resp, httpResp, err := c.FilterApi.TemplategetFilter(ctx, c.AccountId, id, type_, &nextgen.FilterApiTemplategetFilterOpts{
 		OrgIdentifier:     helpers.BuildField(d, "org_id"),
 		ProjectIdentifier: helpers.BuildField(d, "project_id"),
 	})
@@ -106,12 +106,12 @@ func resourceFiltersRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return nil
 	}
 
-	readFilter(d, resp.Data)
+	readTemplateFilter(d, resp.Data)
 
 	return nil
 }
 
-func resourceFiltersCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTemplateFiltersCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c, ctx := meta.(*internal.Session).GetPlatformClientWithContext(ctx)
 
 	var err error
@@ -119,29 +119,29 @@ func resourceFiltersCreateOrUpdate(ctx context.Context, d *schema.ResourceData, 
 	var httpResp *http.Response
 
 	id := d.Id()
-	filter := buildFilter(d)
+	filter := buildTemplateFilter(d)
 
 	if id == "" {
-		resp, httpResp, err = c.FilterApi.PostFilter(ctx, *filter, c.AccountId)
+		resp, httpResp, err = c.FilterApi.TemplatepostFilter(ctx, *filter, c.AccountId)
 	} else {
-		resp, httpResp, err = c.FilterApi.UpdateFilter(ctx, *filter, c.AccountId)
+		resp, httpResp, err = c.FilterApi.TemplateupdateFilter(ctx, *filter, c.AccountId)
 	}
 
 	if err != nil {
 		return helpers.HandleApiError(err, d, httpResp)
 	}
 
-	readFilter(d, resp.Data)
+	readTemplateFilter(d, resp.Data)
 
 	return nil
 }
 
-func resourceFilterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTemplateFiltersDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c, ctx := meta.(*internal.Session).GetPlatformClientWithContext(ctx)
 
 	type_ := d.Get("type").(string)
 
-	_, httpResp, err := c.FilterApi.DeleteFilter(ctx, c.AccountId, d.Id(), type_, &nextgen.FilterApiDeleteFilterOpts{
+	_, httpResp, err := c.FilterApi.TemplatedeleteFilter(ctx, c.AccountId, d.Id(), type_, &nextgen.FilterApiTemplatedeleteFilterOpts{
 		OrgIdentifier:     helpers.BuildField(d, "org_id"),
 		ProjectIdentifier: helpers.BuildField(d, "project_id"),
 	})
@@ -153,7 +153,7 @@ func resourceFilterDelete(ctx context.Context, d *schema.ResourceData, meta inte
 	return nil
 }
 
-func buildFilter(d *schema.ResourceData) *nextgen.Filter {
+func buildTemplateFilter(d *schema.ResourceData) *nextgen.Filter {
 	filter := &nextgen.Filter{
 		FilterProperties: &nextgen.FilterProperties{},
 	}
@@ -192,7 +192,7 @@ func buildFilter(d *schema.ResourceData) *nextgen.Filter {
 	return filter
 }
 
-func readFilter(d *schema.ResourceData, filter *nextgen.Filter) {
+func readTemplateFilter(d *schema.ResourceData, filter *nextgen.Filter) {
 	d.SetId(filter.Identifier)
 	d.Set("identifier", filter.Identifier)
 	d.Set("org_id", filter.OrgIdentifier)

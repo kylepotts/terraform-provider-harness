@@ -1,4 +1,4 @@
-package pipeline_filters
+package template_filters
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func DataSourcePipelineFilters() *schema.Resource {
+func DataSourceTemplateFilters() *schema.Resource {
 	resource := &schema.Resource{
-		Description: "Data source for retrieving a Harness Pipeline Filter.",
+		Description: "Data source for retrieving a Harness Template Filter.",
 
-		ReadContext: dataSourcePipelineFiltersRead,
+		ReadContext: dataSourceTemplateFiltersRead,
 
 		Schema: map[string]*schema.Schema{
 			"identifier": {
@@ -31,10 +31,10 @@ func DataSourcePipelineFilters() *schema.Resource {
 				Computed:    true,
 			},
 			"type": {
-				Description:  "Type of filter. Currently supported types are {PipelineSetup, PipelineExecution, Deployment, Template, EnvironmentGroup, Environment}.",
+				Description:  "Type of filter. Currently supported types are {TemplateSetup, TemplateExecution, Deployment, Template, EnvironmentGroup, Environment}.",
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"PipelineSetup", "PipelineExecution", "Deployment", "Template", "EnvironmentGroup", "Environment"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"TemplateSetup", "TemplateExecution", "Deployment", "Template", "EnvironmentGroup", "Environment"}, false),
 			},
 			"org_id": {
 				Description: "Organization Identifier for the Entity.",
@@ -53,7 +53,7 @@ func DataSourcePipelineFilters() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"filter_type": {
-							Description: "Corresponding Entity of the filters. Currently supported types are {Connector, DelegateProfile, Delegate, PipelineSetup, PipelineExecution, Deployment, Audit, Template, EnvironmentGroup, FileStore, CCMRecommendation, Anomaly, Environment}.",
+							Description: "Corresponding Entity of the filters. Currently supported types are {Connector, DelegateProfile, Delegate, TemplateSetup, TemplateExecution, Deployment, Audit, Template, EnvironmentGroup, FileStore, CCMRecommendation, Anomaly, Environment}.",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
@@ -79,7 +79,7 @@ func DataSourcePipelineFilters() *schema.Resource {
 	return resource
 }
 
-func dataSourcePipelineFiltersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceTemplateFiltersRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c, ctx := meta.(*internal.Session).GetPlatformClientWithContext(ctx)
 
 	var filter *nextgen.Filter
@@ -91,7 +91,7 @@ func dataSourcePipelineFiltersRead(ctx context.Context, d *schema.ResourceData, 
 
 	if id != "" {
 		var resp nextgen.ResponseDtoFilter
-		resp, httpResp, err = c.FilterApi.PipelinegetFilter(ctx, c.AccountId, id, type_, &nextgen.FilterApiPipelinegetFilterOpts{
+		resp, httpResp, err = c.FilterApi.TemplategetFilter(ctx, c.AccountId, id, type_, &nextgen.FilterApiTemplategetFilterOpts{
 			OrgIdentifier:     helpers.BuildField(d, "org_id"),
 			ProjectIdentifier: helpers.BuildField(d, "project_id"),
 		})
@@ -110,7 +110,7 @@ func dataSourcePipelineFiltersRead(ctx context.Context, d *schema.ResourceData, 
 		return nil
 	}
 
-	readPipelineFilter(d, filter)
+	readTemplateFilter(d, filter)
 
 	return nil
 }
